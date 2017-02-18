@@ -9,7 +9,8 @@ function go($appDir) {
     global $basePath, $name, $db_conninfo;
     $basePath = $appDir;
     if (is_string($appDir)) {
-        $c = require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
+        require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
+        $c=f_getConfig();
     }
     if (isset($c['name'])) {
         $name = $c['name'];
@@ -19,8 +20,8 @@ function go($appDir) {
         require 'include' . DIRECTORY_SEPARATOR . 'db' . DIRECTORY_SEPARATOR . $c['db']['use'] . '.php';
         if (isset($c['db']['conninfo'])) {
             $db_conninfo = $c['db']['conninfo'];
+            \db\init($db_conninfo);
         }
-        \db\init();
         unset($c['db']);
     }
     if (isset($c['check']['use'])) {

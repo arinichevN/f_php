@@ -23,7 +23,7 @@ function go($appDir) {
         if (isset($c['db']['conninfo'])) {
             $db_conninfo = $c['db']['conninfo'];
         }
-        \db\init();
+        \db\init($db_conninfo);
         unset($c['db']);
     }
     if (isset($c['udp']['use'])) {

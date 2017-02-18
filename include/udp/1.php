@@ -4,20 +4,17 @@ namespace udp;
 
 $udp;
 
-function init() {
-    global $udp_addr, $udp;
-    $timeout = 3;
+function init($addr, $port, $timeout) {
+    global $udp;
+    $udp_addr = "udp://" . $addr . ":" . $port;
+    if (!$timeout) {
+        $timeout = 3;
+    }
     $udp = stream_socket_client($udp_addr, $errno, $errstr);
     if (!$udp) {
         throw new \Exception("udp connection failed: $errno - $errstr");
     }
-//        fwrite($udp, "\n");
-//        echo fread($udp, 26);
-//        fclose($udp);
-//    
     stream_set_timeout($udp, $timeout);
-
-//    stream_set_blocking($udp, 1);
 }
 
 function init1() {
@@ -53,7 +50,7 @@ function getText($buf_size) {
     $str = "";
     while (true) {
         $str = getBuf($buf_size);
-        if(strpos($str,"\n\n")!==false){
+        if (strpos($str, "\n\n") !== false) {
             break;
         }
         $text .= $str;

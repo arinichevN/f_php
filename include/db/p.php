@@ -4,8 +4,8 @@ namespace db;
 
 $db_connection;
 
-function init() {
-    global $db_connection,$db_conninfo;
+function init($db_conninfo) {
+    global $db_connection;
     $db_connection = \pg_connect($db_conninfo);
     pg_set_error_verbosity(PGSQL_ERRORS_VERBOSE);
     if (!$db_connection) {

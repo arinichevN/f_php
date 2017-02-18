@@ -3,13 +3,13 @@
 $app_version = 2;
 $basePath = '';
 $name = '';
-$udp_addr = '';
 
 function go($appDir) {
-    global $basePath, $name, $udp_addr;
+    global $basePath, $name;
     $basePath = $appDir;
     if (is_string($appDir)) {
-        $c = require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
+        require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
+        $c = f_getConfig();
     }
     if (isset($c['name'])) {
         $name = $c['name'];
@@ -19,8 +19,8 @@ function go($appDir) {
     if (isset($c['udp']['use'])) {
         require 'include' . DIRECTORY_SEPARATOR . 'udp' . DIRECTORY_SEPARATOR . $c['udp']['use'] . '.php';
         if (isset($c['udp']['port']) && isset($c['udp']['addr'])) {
-            $udp_addr = "udp://" . $c['udp']['addr'] . ":" . $c['udp']['port'];
-            }
+            \udp\init($c['udp']['addr'], $c['udp']['port']);
+        }
         unset($c['udp']);
     }
     if (isset($c['acp']['use'])) {
@@ -31,7 +31,6 @@ function go($appDir) {
         foreach ($c['check']['use'] as $value) {
             require 'include' . DIRECTORY_SEPARATOR . 'check' . DIRECTORY_SEPARATOR . $value . '.php';
         }
-        \udp\init();
         unset($c['check']);
     }
     spl_autoload_register('autoload');
