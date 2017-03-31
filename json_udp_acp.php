@@ -16,12 +16,25 @@ function go($appDir) {
         unset($c['name']);
     }
 
-    if (isset($c['udp']['use'])) {
-        require 'include' . DIRECTORY_SEPARATOR . 'udp' . DIRECTORY_SEPARATOR . $c['udp']['use'] . '.php';
-        if (isset($c['udp']['port']) && isset($c['udp']['addr'])) {
-            \udp\init($c['udp']['addr'], $c['udp']['port']);
+    if (isset($c['sock']['use'])) {
+        require 'include' . DIRECTORY_SEPARATOR . 'sock' . DIRECTORY_SEPARATOR . $c['sock']['use'] . '.php';
+        if (isset($c['sock']['port']) && isset($c['sock']['addr']) && isset($c['sock']['timeout'])) {
+            try {
+                \sock\init($c['sock']['addr'], $c['sock']['port'], $c['sock']['timeout']);
+            } catch (\Exception $exc) {
+                $response = [
+                    'c_status' => 2,
+                    'message' => $exc->getMessage()
+                ];
+                $code = $exc->getCode();
+                if ($code === 3) {
+                    $response['c_status'] = 3;
+                }
+                send($response);
+                return;
+            }
         }
-        unset($c['udp']);
+        unset($c['sock']);
     }
     if (isset($c['acp']['use'])) {
         require 'include' . DIRECTORY_SEPARATOR . 'acp' . DIRECTORY_SEPARATOR . $c['acp']['use'] . '.php';
@@ -43,12 +56,12 @@ function autoload($class) {
     if (file_exists($p)) {
         require $p;
     } else {
-
         throw new \Exception('no class');
     }
 }
 
 function run() {
+    global $sock;
     try {
         $raw_request = file_get_contents("php://input");
         if ($raw_request !== false) {
@@ -74,8 +87,8 @@ function run() {
         }
         send($response);
     }
-    if ($udp) {
-        \udp\suspend();
+    if ($sock) {
+        \sock\suspend();
     }
 }
 

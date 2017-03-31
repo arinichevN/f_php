@@ -1,20 +1,17 @@
 <?php
 
-namespace udp;
+namespace sock;
 
-$udp;
+$sock;
 
-function init($addr, $port, $timeout) {
-    global $udp;
-    $udp_addr = "udp://" . $addr . ":" . $port;
-    if (!$timeout) {
-        $timeout = 3;
+function init($addr, $port, $timeout = 1) {
+    global $sock;
+    $sock_addr = "udp://" . $addr . ":" . $port;
+    $sock = stream_socket_client($sock_addr, $errno, $errstr);
+    if (!$sock) {
+        throw new \Exception("socket connection failed: $errno - $errstr");
     }
-    $udp = stream_socket_client($udp_addr, $errno, $errstr);
-    if (!$udp) {
-        throw new \Exception("udp connection failed: $errno - $errstr");
-    }
-    stream_set_timeout($udp, $timeout);
+    stream_set_timeout($sock, $timeout);
 }
 
 function init1() {
@@ -31,18 +28,20 @@ function init1() {
 }
 
 function suspend() {
-    global $udp;
-    fclose($udp);
+    global $sock;
+    if (is_resource($sock)) {
+        fclose($sock);
+    }
 }
 
 function sendBuf($buf) {
-    global $udp;
-    return fwrite($udp, $buf);
+    global $sock;
+    return fwrite($sock, $buf);
 }
 
 function getBuf($buf_size) {
-    global $udp;
-    return fread($udp, $buf_size);
+    global $sock;
+    return fread($sock, $buf_size);
 }
 
 function getText($buf_size) {
@@ -60,15 +59,15 @@ function getText($buf_size) {
 
 //send command and do not wait for response
 function sgCmdNR($qnf, $cmd) {
-    global $udp;
-    fwrite($udp, acp_getPackFromCmd($qnf, $cmd));
+    global $sock;
+    fwrite($sock, acp_getPackFromCmd($qnf, $cmd));
 }
 
 function getIrgData() {
-    global $udp;
+    global $sock;
     $packet = acp_packFromCmd(ACP_QUANTIFIER_SPECIFIC, ACP_CMD_IRG_VALVE_GET_DATA);
-    fwrite($udp, $packet);
-    return fread($udp, BUF_SIZE);
+    fwrite($sock, $packet);
+    return fread($sock, BUF_SIZE);
 }
 
 function getDataS1(&$q, $s) {

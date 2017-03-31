@@ -3,10 +3,9 @@
 $app_version = 2;
 $basePath = '';
 $name = '';
-$db_conninfo = "";
 
 function go($appDir) {
-    global $basePath, $name, $db_conninfo;
+    global $basePath, $name;
     $basePath = $appDir;
     if (is_string($appDir)) {
         require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
@@ -15,27 +14,6 @@ function go($appDir) {
     if (isset($c['name'])) {
         $name = $c['name'];
         unset($c['name']);
-    }
-    if (isset($c['db']['use'])) {
-        require 'include' . DIRECTORY_SEPARATOR . 'db' . DIRECTORY_SEPARATOR . $c['db']['use'] . '.php';
-        if (isset($c['db']['conninfo'])) {
-            $db_conninfo = $c['db']['conninfo'];
-            try {
-                \db\init($db_conninfo);
-            } catch (\Exception $exc) {
-                $response = [
-                    'c_status' => 2,
-                    'message' => $exc->getMessage()
-                ];
-                $code = $exc->getCode();
-                if ($code === 3) {
-                    $response['c_status'] = 3;
-                }
-                send($response);
-                return;
-            }
-        }
-        unset($c['db']);
     }
     if (isset($c['check']['use'])) {
         foreach ($c['check']['use'] as $value) {
@@ -59,7 +37,6 @@ function autoload($class) {
 }
 
 function run() {
-    global $db_connection;
     try {
         $raw_request = file_get_contents("php://input");
         if ($raw_request !== false) {
@@ -84,9 +61,6 @@ function run() {
             $response['c_status'] = 3;
         }
         send($response);
-    }
-    if ($db_connection) {
-        \db\suspend();
     }
 }
 

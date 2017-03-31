@@ -45,7 +45,7 @@ function getDataM(&$q) {
 function command(&$q) {
     $result = getData($q);
     if (pg_result_status($result) !== PGSQL_COMMAND_OK) {
-        throw new \Exception('\db\updateQ failed');
+        throw new \Exception('\db\command failed');
     }
 }
 function commandF(&$q) {
