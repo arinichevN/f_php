@@ -2,6 +2,11 @@
 
 namespace acp;
 
+define("ACP_DELIMITER_COLUMN", "_");
+define("ACP_DELIMITER_ROW", "\n");
+define("ACP_DELIMITER_CMD", "\n");
+define("ACP_DELIMITER_CRC", "\n");
+
 define("ACP_BUF_SIZE", 508);
 define("ACP_CMD_APP_START", '+');
 define("ACP_CMD_APP_STOP", '-');
@@ -80,7 +85,7 @@ define("ACP_RESP_CRC_ERROR", "C");
 define("ACP_RESP_BUF_OVERFLOW", "O");
 
 
-$crc8_table = array(
+$crc8_table = [
     0x00, 0x3e, 0x7c, 0x42, 0xf8, 0xc6, 0x84, 0xba, 0x95, 0xab, 0xe9, 0xd7,
     0x6d, 0x53, 0x11, 0x2f, 0x4f, 0x71, 0x33, 0x0d, 0xb7, 0x89, 0xcb, 0xf5,
     0xda, 0xe4, 0xa6, 0x98, 0x22, 0x1c, 0x5e, 0x60, 0x9e, 0xa0, 0xe2, 0xdc,
@@ -102,10 +107,9 @@ $crc8_table = array(
     0x31, 0x0f, 0x4d, 0x73, 0xc9, 0xf7, 0xb5, 0x8b, 0x75, 0x4b, 0x09, 0x37,
     0x8d, 0xb3, 0xf1, 0xcf, 0xe0, 0xde, 0x9c, 0xa2, 0x18, 0x26, 0x64, 0x5a,
     0x3a, 0x04, 0x46, 0x78, 0xc2, 0xfc, 0xbe, 0x80, 0xaf, 0x91, 0xd3, 0xed,
-    0x57, 0x69, 0x2b, 0x15);
+    0x57, 0x69, 0x2b, 0x15];
 
 function crc_update($crc, $b) {
-
     for ($i = 8; $i; $i--) {
         $crc = (($crc ^ $b) & 1) ? ($crc >> 1) ^ 0b10001100 : ($crc >> 1);
         $b >>= 1;
@@ -115,7 +119,6 @@ function crc_update($crc, $b) {
 
 function crc_update_by_str($crc, $str) {
     $len = \strlen($str);
-
     $i = 0;
     while ($len--) {
         $extract = ord($str[$i]);
@@ -147,18 +150,18 @@ function crc_check($buf_str) {
 }
 
 function getPackFromCmd($qnf, $cmd) {
-    $packet = $qnf . $cmd . "\n\n";
+    $packet = $qnf . $cmd . ACP_DELIMITER_CMD . ACP_DELIMITER_CRC;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $packet);
     return $packet;
 }
 
 function sendPackI1($cmd, $i1_list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . "\n";
+    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
     foreach ($i1_list as $value) {
-        $buf.=$value . "\n";
+        $buf.=$value . ACP_DELIMITER_ROW;
     }
-    $buf.="\n";
+    $buf.=ACP_DELIMITER_CRC;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $buf);
     $buf.=chr($crc);
@@ -170,13 +173,13 @@ function sendPackI1($cmd, $i1_list) {
 }
 
 function sendPackI1F1($cmd, $list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . "\n";
+    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
     foreach ($list as $value) {
         $v0 = intval($value['p0']);
         $v1 = floatval($value['p1']);
-        $buf.=$v0 . "_" . $v1 . "\n";
+        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
     }
-    $buf.="\n";
+    $buf.=ACP_DELIMITER_CRC;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $buf);
     $buf.=chr($crc);
@@ -188,13 +191,13 @@ function sendPackI1F1($cmd, $list) {
 }
 
 function sendPackI2($cmd, $list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . "\n";
+    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
     foreach ($list as $value) {
         $v0 = intval($value['p0']);
         $v1 = intval($value['p1']);
-        $buf.=$v0 . "_" . $v1 . "\n";
+        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
     }
-    $buf.="\n";
+    $buf.=ACP_DELIMITER_CRC;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $buf);
     $buf.=chr($crc);
@@ -206,20 +209,16 @@ function sendPackI2($cmd, $list) {
 }
 
 function sendPackBroadcast($cmd) {
-    $buf = ACP_QUANTIFIER_BROADCAST . $cmd . "\n\n";
+    $buf = ACP_QUANTIFIER_BROADCAST . $cmd . ACP_DELIMITER_CMD . ACP_DELIMITER_CRC;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $buf);
     $buf.=chr($crc);
     \sock\sendBuf($buf);
 }
 
-function getBufParseIrgData() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-}
-
 function getBufParseStateData() {
     $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
+    if (\strlen($buf) === 0) {
         throw new \Exception("getBufParseStateData: controller returned nothing");
     }
     if (!crc_check($buf)) {
@@ -228,509 +227,185 @@ function getBufParseStateData() {
     return $buf[1];
 }
 
-function parseIrgValveState($buf_str) {
+function rowToArr($str, $items_count) {
+    $data = \explode(ACP_DELIMITER_COLUMN, $str, $items_count);
+    if (\count($data) !== $items_count) {
+        throw new \Exception("rowToArr: bad format");
+    }
+    return $data;
+}
+
+function getData($buf_str, $rowArr) {
     $data = [];
     $str = "";
     $last_char = NULL;
+    $field_count = \count($rowArr);
     for ($i = 0; $i < \strlen($buf_str); $i++) {
         if ($i < 3) {
             $last_char = $buf_str[$i];
             continue;
         }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
+        if ($buf_str[$i] === ACP_DELIMITER_CRC && $last_char === ACP_DELIMITER_ROW) {
+            return $data;
+        }
+        if ($buf_str[$i] === ACP_DELIMITER_ROW) {
+            $arr = rowToArr($str, $field_count);
+            $row = array_merge([], $rowArr);
+            $j = 0;
+            foreach ($row as $key => $value) {
+                $row[$key] = $arr[$j];
+                $j++;
             }
-            $arr = explode('_', $str, 12);
-            if (\count($arr) !== 12) {
-                throw new \Exception("parseIrgValveState: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'state' => $arr[1],
-                'state_wp' => $arr[2],
-                'state_rn' => $arr[3],
-                'state_tc' => $arr[4],
-                'step_tc' => $arr[5],
-                'crepeat' => $arr[6],
-                'blocked_rn' => $arr[7],
-                'cbusy_time' => $arr[8],
-                'time_passed_main' => $arr[9],
-                'time_passed_tc' => $arr[10],
-                'last_output' => $arr[11]
-            ]);
+            \array_push($data, $row);
             $str = null;
         }
         $str.=$buf_str[$i];
         $last_char = $buf_str[$i];
+    }
+    return $data;
+}
+
+function parseResponse($rowArr) {
+    $buf = \sock\getBuf(ACP_BUF_SIZE);
+    if (\strlen($buf) === 0) {
+        throw new \Exception("parseResponse: controller returned nothing");
+    }
+    if (!crc_check($buf)) {
+        throw new \Exception("parseResponse: crc check failed");
+    }
+    $data = getData($buf, $rowArr);
+    if ($data === false) {
+        throw new \Exception("parseResponse: bad format");
     }
     return $data;
 }
 
 function getIrgValveState() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getIrgValveState: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getIrgValveState: crc check failed");
-    }
-    $data = parseIrgValveState($buf);
-    if ($data === false) {
-        throw new \Exception("getIrgValveState: bad format");
-    }
-    return $data;
-}
-
-function parseIrgValveState1($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, 17);
-            if (\count($arr) !== 17) {
-                throw new \Exception("parseIrgValveState1: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'output' => $arr[1],
-                'rain' => $arr[2],
-                'is_master' => $arr[3],
-                'master_count' => $arr[4],
-                'running_prog_id' => $arr[5],
-                'prog_loaded' => $arr[6],
-                'state_main' => $arr[7],
-                'state_wp' => $arr[8],
-                'state_rn' => $arr[9],
-                'state_tc' => $arr[10],
-                'crepeat' => $arr[11],
-                'blocked_rn' => $arr[12],
-                'time_passed' => $arr[13],
-                'time_specified' => $arr[14],
-                'time_rest_tc' => $arr[15],
-                'em_peer_active' => $arr[16]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'state_wp' => null,
+        'state_rn' => null,
+        'state_tc' => null,
+        'step_tc' => null,
+        'crepeat' => null,
+        'blocked_rn' => null,
+        'cbusy_time' => null,
+        'time_passed_main' => null,
+        'time_passed_tc' => null,
+        'last_output' => null
+    ]);
 }
 
 function getIrgValveState1() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getIrgValveState1: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getIrgValveState1: crc check failed");
-    }
-    $data = parseIrgValveState1($buf);
-    if ($data === false) {
-        throw new \Exception("getIrgValveState1: bad format");
-    }
-    return $data;
-}
-
-function parseLgrDataInit($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, 3);
-            if (\count($arr) !== 3) {
-                throw new \Exception("parseLgrDataInit: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'interval_min' => $arr[1],
-                'max_rows' => $arr[2]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'output' => null,
+        'rain' => null,
+        'is_master' => null,
+        'master_count' => null,
+        'running_prog_id' => null,
+        'prog_loaded' => null,
+        'state_main' => null,
+        'state_wp' => null,
+        'state_rn' => null,
+        'state_tc' => null,
+        'crepeat' => null,
+        'blocked_rn' => null,
+        'time_passed' => null,
+        'time_specified' => null,
+        'time_rest_tc' => null,
+        'em_peer_active' => null
+    ]);
 }
 
 function getLgrDataInit() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getLgrDataInit: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getLgrDataInit: crc check failed");
-    }
-    $data = parseLgrDataInit($buf);
-    if ($data === false) {
-        throw new \Exception("getLgrDataInit: bad format");
-    }
-    return $data;
-}
-
-function parseLgrDataRuntime($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 3;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseLgrDataRuntime: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'state' => $arr[1],
-                'log_time_rest' => $arr[2]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'interval_min' => null,
+        'max_rows' => null
+    ]);
 }
 
 function getLgrDataRuntime() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getLgrDataRuntime: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getLgrDataRuntime: crc check failed");
-    }
-    $data = parseAlrDataRuntime($buf);
-    if ($data === false) {
-        throw new \Exception("getLgrDataRuntime: bad format");
-    }
-    return $data;
-}
-
-function parseRegsmpDataRuntime($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 8;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseRegsmpDataRuntime: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'state' => $arr[1],
-                'state_r' => $arr[2],
-                'output_heater' => $arr[3],
-                'output_cooler' => $arr[4],
-                'change_tm_rest' => $arr[5],
-                'sensor_value' => $arr[6],
-                'sensor_state' => $arr[7]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'log_time_rest' => null
+    ]);
 }
 
 function getRegsmpDataRuntime() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getRegsmpDataRuntime: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getRegsmpDataRuntime: crc check failed");
-    }
-    $data = parseRegsmpDataRuntime($buf);
-    if ($data === false) {
-        throw new \Exception("getRegsmpDataRuntime: bad format");
-    }
-    return $data;
-}
-
-function parseRegsmpDataInit($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 11;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseRegsmpDataInit: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'goal' => $arr[1],
-                'mode' => $arr[2],
-                'delta' => $arr[3],
-                'pid_h_kp' => $arr[4],
-                'pid_h_ki' => $arr[5],
-                'pid_h_kd' => $arr[6],
-                'pid_c_kp' => $arr[7],
-                'pid_c_ki' => $arr[8],
-                'pid_c_kd' => $arr[9],
-                'change_gap' => $arr[10]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'state_r' => null,
+        'output_heater' => null,
+        'output_cooler' => null,
+        'change_tm_rest' => null,
+        'sensor_value' => null,
+        'sensor_state' => null
+    ]);
 }
 
 function getRegsmpDataInit() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getRegsmpDataInit: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getRegsmpDataInit: crc check failed");
-    }
-    $data = parseRegsmpDataInit($buf);
-    if ($data === false) {
-        throw new \Exception("getRegsmpDataInit: bad format");
-    }
-    return $data;
-}
-
-function parseRegonfDataRuntime($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 8;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseRegonfDataRuntime: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'state' => $arr[1],
-                'state_r' => $arr[2],
-                'output_heater' => $arr[3],
-                'output_cooler' => $arr[4],
-                'change_tm_rest' => $arr[5],
-                'sensor_value' => $arr[6],
-                'sensor_state' => $arr[7]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'goal' => null,
+        'mode' => null,
+        'delta' => null,
+        'pid_h_kp' => null,
+        'pid_h_ki' => null,
+        'pid_h_kd' => null,
+        'pid_c_kp' => null,
+        'pid_c_ki' => null,
+        'pid_c_kd' => null,
+        'change_gap' => null
+    ]);
 }
 
 function getRegonfDataRuntime() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getRegonfDataRuntime: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getRegonfDataRuntime: crc check failed");
-    }
-    $data = parseRegonfDataRuntime($buf);
-    if ($data === false) {
-        throw new \Exception("getRegonfDataRuntime: bad format");
-    }
-    return $data;
-}
-
-function parseRegonfDataInit($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 4;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseRegonfDataInit: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'goal' => $arr[1],
-                'delta' => $arr[2],
-                'change_gap' => $arr[3]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'state_r' => null,
+        'output_heater' => null,
+        'output_cooler' => null,
+        'change_tm_rest' => null,
+        'sensor_value' => null,
+        'sensor_state' => null
+    ]);
 }
 
 function getRegonfDataInit() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getRegonfDataInit: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getRegonfDataInit: crc check failed");
-    }
-    $data = parseRegonfDataInit($buf);
-    if ($data === false) {
-        throw new \Exception("getRegonfDataInit: bad format");
-    }
-    return $data;
-}
-
-function parseAlrDataInit($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 9;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseAlrDataInit: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'description' => $arr[1],
-                'good_value' => $arr[2],
-                'good_delta' => $arr[3],
-                'check_interval' => $arr[4],
-                'cope_duration' => $arr[5],
-                'phone_number_group_id' => $arr[6],
-                'sms' => $arr[7],
-                'ring' => $arr[8]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'goal' => null,
+        'delta' => null,
+        'change_gap' => null
+    ]);
 }
 
 function getAlrDataInit() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getAlrDataInit: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getAlrDataInit: crc check failed");
-    }
-    $data = parseAlrDataInit($buf);
-    if ($data === false) {
-        throw new \Exception("getAlrDataInit: bad format");
-    }
-    return $data;
-}
-
-function parseAlrDataRuntime($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    $field_count = 3;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, $field_count);
-            if (\count($arr) !== $field_count) {
-                throw new \Exception("parseAlrDataRuntime: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'state' => $arr[1],
-                'cope_time_rest' => $arr[2]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'description' => null,
+        'good_value' => null,
+        'good_delta' => null,
+        'check_interval' => null,
+        'cope_duration' => null,
+        'phone_number_group_id' => null,
+        'sms' => null,
+        'ring' => null
+    ]);
 }
 
 function getAlrDataRuntime() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getAlrDataRuntime: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getAlrDataRuntime: crc check failed");
-    }
-    $data = parseAlrDataRuntime($buf);
-    if ($data === false) {
-        throw new \Exception("getAlrDataRuntime: bad format");
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'cope_time_rest' => null
+    ]);
 }
 
 function parseDate($buf_str) {
@@ -744,10 +419,7 @@ function parseDate($buf_str) {
         }
         $str.=$buf_str[$i];
     }
-    $arr = explode('_', $str, 6);
-    if (\count($arr) !== 6) {
-        throw new \Exception("parseDate: bad format");
-    }
+    $arr = rowToArr($str, 6);
     $data = [
         'year' => $arr[0],
         'month' => $arr[1],
@@ -761,7 +433,7 @@ function parseDate($buf_str) {
 
 function getDate() {
     $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
+    if (\strlen($buf) === 0) {
         throw new \Exception("getDate: controller returned nothing");
     }
     if (!crc_check($buf)) {
@@ -774,51 +446,14 @@ function getDate() {
     return $data;
 }
 
-function parseFTS($buf_str) {
-    $data = [];
-    $str = "";
-    $last_char = NULL;
-    for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            $last_char = $buf_str[$i];
-            continue;
-        }
-        if ($buf_str[$i] === "\n") {
-            if ($last_char === "\n") {
-                return $data;
-            }
-            $arr = explode('_', $str, 5);
-            if (\count($arr) !== 5) {
-                throw new \Exception("parseIrgValveState1: bad format");
-            }
-            \array_push($data, [
-                'id' => $arr[0],
-                'value' => $arr[1],
-                'tv_sec' => $arr[2],
-                'tv_nsec' => $arr[3],
-                'state' => $arr[4]
-            ]);
-            $str = null;
-        }
-        $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
-    }
-    return $data;
-}
-
 function getFTS() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
-        throw new \Exception("getFTS: controller returned nothing");
-    }
-    if (!crc_check($buf)) {
-        throw new \Exception("getFTS: crc check failed");
-    }
-    $data = parseFTS($buf);
-    if ($data === false) {
-        throw new \Exception("getFTS: bad format");
-    }
-    return $data;
+    return parseResponse([
+        'id' => null,
+        'value' => null,
+        'tv_sec' => null,
+        'tv_nsec' => null,
+        'state' => null
+    ]);
 }
 
 function parseString($buf_str) {
@@ -834,9 +469,10 @@ function parseString($buf_str) {
     }
     return $str;
 }
+
 function getString() {
     $buf = \sock\getBuf(ACP_BUF_SIZE);
-    if (strlen($buf) === 0) {
+    if (\strlen($buf) === 0) {
         throw new \Exception("getString: controller returned nothing");
     }
     if (!crc_check($buf)) {
