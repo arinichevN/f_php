@@ -2,10 +2,11 @@
 
 namespace acp;
 
-define("ACP_DELIMITER_COLUMN", "_");
-define("ACP_DELIMITER_ROW", "\n");
+define("ACP_DELIMITER_COLUMN", "\t");
+define("ACP_DELIMITER_ROW", "\n"); //different from crc
 define("ACP_DELIMITER_CMD", "\n");
-define("ACP_DELIMITER_CRC", "\n");
+define("ACP_DELIMITER_CRC", "\r"); //unique in packet (except crc)
+define("ACP_DELIMITER_PACKET", "\0");
 
 define("ACP_BUF_SIZE", 508);
 define("ACP_CMD_APP_START", '+');
@@ -49,12 +50,32 @@ define("ACP_CMD_REGONF_PROG_GET_DATA_RUNTIME", 'q');
 define("ACP_CMD_REGONF_PROG_GET_DATA_INIT", 'r');
 define("ACP_CMD_REGONF_PROG_SET_HEATER_POWER", 's');
 define("ACP_CMD_REGONF_PROG_SET_COOLER_POWER", 't');
-define("ACP_CMD_REGONF_PROG_SWITCH_STATE", 'v');
 define("ACP_CMD_REGONF_PROG_SET_GOAL", 'u');
-define("ACP_CMD_REGONF_PROG_SET_DELTA", 'w');
-define("ACP_CMD_REGONF_PROG_ENABLE", 'x');
-define("ACP_CMD_REGONF_PROG_DISABLE", 'y');
+define("ACP_CMD_REGONF_PROG_SET_HEATER_DELTA", 'v');
+define("ACP_CMD_REGONF_PROG_SET_COOLER_DELTA", 'w');
+define("ACP_CMD_REGONF_PROG_SET_CHANGE_GAP", 'x');
+define("ACP_CMD_REGONF_PROG_ENABLE", 'y');
+define("ACP_CMD_REGONF_PROG_DISABLE", 'z');
 
+define("ACP_CMD_REGSMP_PROG_GET_DATA_RUNTIME", 'q');
+define("ACP_CMD_REGSMP_PROG_GET_DATA_INIT", 'r');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_POWER", 's');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_POWER", 't');
+define("ACP_CMD_REGSMP_PROG_SET_GOAL", 'u');
+define("ACP_CMD_REGSMP_PROG_SET_CHANGE_GAP", 'v');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_MODE", 'w');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_DELTA", 'x');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KP", 'y');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KI", 'z');
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KD", 'A');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_MODE", 'B');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_DELTA", 'C');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KP", 'D');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KI", 'E');
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KD", 'F');
+define("ACP_CMD_REGSMP_PROG_ENABLE", 'G');
+define("ACP_CMD_REGSMP_PROG_DISABLE", 'H');
+define("ACP_CMD_REGSMP_PROG_SET_EM_MODE", 'I');
 
 define("ACP_CMD_ALR_PROG_GET_DATA_RUNTIME", 'q');
 define("ACP_CMD_ALR_PROG_GET_DATA_INIT", 'r');
@@ -190,6 +211,24 @@ function sendPackI1F1($cmd, $list) {
     }
 }
 
+function sendPackI1S1($cmd, $list) {
+    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
+    foreach ($list as $value) {
+        $v0 = intval($value['p0']);
+        $v1 = $value['p1'];
+        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
+    }
+    $buf.=ACP_DELIMITER_CRC;
+    $crc = 0x00;
+    $crc = crc_update_by_str($crc, $buf);
+    $buf.=chr($crc);
+    $buf_len = \strlen($buf);
+    $n = \sock\sendBuf($buf);
+    if ($n !== $buf_len) {
+        throw new \Exception("sendPackI1S1: sendBuf: expected to write: $buf_len, but written: $n");
+    }
+}
+
 function sendPackI2($cmd, $list) {
     $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
     foreach ($list as $value) {
@@ -238,14 +277,14 @@ function rowToArr($str, $items_count) {
 function getData($buf_str, $rowArr) {
     $data = [];
     $str = "";
-    $last_char = NULL;
+    //  $last_char = NULL;
     $field_count = \count($rowArr);
     for ($i = 0; $i < \strlen($buf_str); $i++) {
         if ($i < 3) {
-            $last_char = $buf_str[$i];
+            //   $last_char = $buf_str[$i];
             continue;
         }
-        if ($buf_str[$i] === ACP_DELIMITER_CRC && $last_char === ACP_DELIMITER_ROW) {
+        if ($buf_str[$i] === ACP_DELIMITER_CRC) {// && $last_char === ACP_DELIMITER_ROW) {
             return $data;
         }
         if ($buf_str[$i] === ACP_DELIMITER_ROW) {
@@ -260,7 +299,7 @@ function getData($buf_str, $rowArr) {
             $str = null;
         }
         $str.=$buf_str[$i];
-        $last_char = $buf_str[$i];
+        // $last_char = $buf_str[$i];
     }
     return $data;
 }
@@ -335,6 +374,31 @@ function getLgrDataRuntime() {
     ]);
 }
 
+function getRegonfDataRuntime() {
+    return parseResponse([
+        'id' => null,
+        'state' => null,
+        'state_r' => null,
+        'output_heater' => null,
+        'output_cooler' => null,
+        'change_tm_rest' => null,
+        'sensor_value' => null,
+        'sensor_state' => null
+    ]);
+}
+
+function getRegonfDataInit() {
+    return parseResponse([
+        'id' => null,
+        'change_gap' => null,
+        'goal' => null,
+        'heater_delta' => null,
+        'heater_rsl' => null,
+        'cooler_delta' => null,
+        'cooler_rsl' => null
+    ]);
+}
+
 function getRegsmpDataRuntime() {
     return parseResponse([
         'id' => null,
@@ -352,37 +416,21 @@ function getRegsmpDataInit() {
     return parseResponse([
         'id' => null,
         'goal' => null,
-        'mode' => null,
-        'delta' => null,
-        'pid_h_kp' => null,
-        'pid_h_ki' => null,
-        'pid_h_kd' => null,
-        'pid_c_kp' => null,
-        'pid_c_ki' => null,
-        'pid_c_kd' => null,
-        'change_gap' => null
-    ]);
-}
-
-function getRegonfDataRuntime() {
-    return parseResponse([
-        'id' => null,
-        'state' => null,
-        'state_r' => null,
-        'output_heater' => null,
-        'output_cooler' => null,
-        'change_tm_rest' => null,
-        'sensor_value' => null,
-        'sensor_state' => null
-    ]);
-}
-
-function getRegonfDataInit() {
-    return parseResponse([
-        'id' => null,
-        'goal' => null,
-        'delta' => null,
-        'change_gap' => null
+        'change_gap' => null,
+        'heater_mode' => null,
+        'heater_use'=>null,
+        'heater_rsl' => null,
+        'heater_delta' => null,
+        'heater_kp' => null,
+        'heater_ki' => null,
+        'heater_kd' => null,        
+        'cooler_mode' => null,
+        'cooler_use'=>null,
+        'cooler_rsl' => null,
+        'cooler_delta' => null,
+        'cooler_kp' => null,
+        'cooler_ki' => null,
+        'cooler_kd' => null
     ]);
 }
 
