@@ -2,109 +2,92 @@
 
 namespace acp;
 
-define("ACP_DELIMITER_COLUMN", "\t");
-define("ACP_DELIMITER_ROW", "\n"); //different from crc
-define("ACP_DELIMITER_CMD", "\n");
-define("ACP_DELIMITER_CRC", "\r"); //unique in packet (except crc)
-define("ACP_DELIMITER_PACKET", "\0");
+define("ACP_BUFFER_MAX_SIZE", 508);
 
-define("ACP_BUF_SIZE", 508);
-define("ACP_CMD_APP_START", '+');
-define("ACP_CMD_APP_STOP", '-');
-define("ACP_CMD_APP_EXIT", '*');
-define("ACP_CMD_APP_RESET", '&');
-define("ACP_CMD_APP_PING", '~');
-define("ACP_CMD_APP_HELP", '?');
-define("ACP_CMD_APP_PRINT", '@');
-define("ACP_CMD_APP_TIME", 'T');
-define("ACP_CMD_APP_NO", '_');
+define("ACP_DELIMITER_COLUMN", "\t");
+define("ACP_DELIMITER_ROW", "\n");
+define("ACP_DELIMITER_BLOCK", "\r");
+define("ACP_DELIMITER_PACKET", "\0");
 
 define("ACP_RESP_APP_BUSY", "B");
 define("ACP_RESP_APP_IDLE", "I");
 
-define("ACP_CMD_GET_FTS", 'a');
-define("ACP_CMD_GET_INT", 'b');
-define("ACP_CMD_LOG_START", 'c');
-define("ACP_CMD_LOG_STOP", 'd');
-define("ACP_CMD_SET_FLOAT", 'e');
-define("ACP_CMD_SET_INT", 'f');
 
-define("ACP_CMD_SET_DUTY_CYCLE_PWM", 'g');
-define("ACP_CMD_SET_DUTY_CYCLE_PM", 'h');
-define("ACP_CMD_SET_PWM_PERIOD", 'i');
-define("ACP_CMD_SET_PM_DUTY_TIME_MIN", 'j');
-define("ACP_CMD_SET_PM_IDLE_TIME_MIN", 'k');
+define("ACP_CMD_APP_START", "ast");
+define("ACP_CMD_APP_STOP", "asp");
+define("ACP_CMD_APP_EXIT", "aex");
+define("ACP_CMD_APP_RESET", "ars");
+define("ACP_CMD_APP_PING", "apn");
+define("ACP_CMD_APP_HELP", "ahl");
+define("ACP_CMD_APP_PRINT", "apr");
+define("ACP_CMD_APP_TIME", "atm");
+define("ACP_CMD_APP_NO", "ano");
 
-define("ACP_CMD_STOP", 'l');
-define("ACP_CMD_START", 'm');
-define("ACP_CMD_RESET", 'n');
+define("ACP_CMD_GET_FTS", "gfts");
+define("ACP_CMD_GET_ITS", "gits");
+define("ACP_CMD_GET_INT", "gi");
+define("ACP_CMD_SET_FLOAT", "sf");
+define("ACP_CMD_SET_INT", "si");
 
-define("ACP_CMD_IRG_VALVE_TURN_ON", 'o');
-define("ACP_CMD_IRG_VALVE_TURN_OFF", 'p');
-define("ACP_CMD_IRG_VALVE_GET_DATA", 'q');
-define("ACP_CMD_IRG_GET_TIME", 'r');
-define("ACP_CMD_IRG_VALVE_GET_DATA1", 's');
-define("ACP_CMD_IRG_PROG_MTURN", 't');
+define("ACP_CMD_SET_DUTY_CYCLE_PWM", "sdcpwm");
+define("ACP_CMD_SET_DUTY_CYCLE_PM", "sdcpm");
+define("ACP_CMD_SET_PWM_PERIOD", "spwmp");
+define("ACP_CMD_SET_PM_DUTY_TIME_MIN", "spmdtm");
+define("ACP_CMD_SET_PM_IDLE_TIME_MIN", "spmitm");
 
-define("ACP_CMD_REGONF_PROG_GET_DATA_RUNTIME", 'q');
-define("ACP_CMD_REGONF_PROG_GET_DATA_INIT", 'r');
-define("ACP_CMD_REGONF_PROG_SET_HEATER_POWER", 's');
-define("ACP_CMD_REGONF_PROG_SET_COOLER_POWER", 't');
-define("ACP_CMD_REGONF_PROG_SET_GOAL", 'u');
-define("ACP_CMD_REGONF_PROG_SET_HEATER_DELTA", 'v');
-define("ACP_CMD_REGONF_PROG_SET_COOLER_DELTA", 'w');
-define("ACP_CMD_REGONF_PROG_SET_CHANGE_GAP", 'x');
-define("ACP_CMD_REGONF_PROG_ENABLE", 'y');
-define("ACP_CMD_REGONF_PROG_DISABLE", 'z');
+define("ACP_CMD_STOP", "sp");
+define("ACP_CMD_START", "st");
+define("ACP_CMD_RESET", "rs");
+define("ACP_CMD_GET_DATA", "gd");
 
-define("ACP_CMD_REGSMP_PROG_GET_DATA_RUNTIME", 'q');
-define("ACP_CMD_REGSMP_PROG_GET_DATA_INIT", 'r');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_POWER", 's');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_POWER", 't');
-define("ACP_CMD_REGSMP_PROG_SET_GOAL", 'u');
-define("ACP_CMD_REGSMP_PROG_SET_CHANGE_GAP", 'v');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_MODE", 'w');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_DELTA", 'x');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_KP", 'y');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_KI", 'z');
-define("ACP_CMD_REGSMP_PROG_SET_HEATER_KD", 'A');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_MODE", 'B');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_DELTA", 'C');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_KP", 'D');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_KI", 'E');
-define("ACP_CMD_REGSMP_PROG_SET_COOLER_KD", 'F');
-define("ACP_CMD_REGSMP_PROG_ENABLE", 'G');
-define("ACP_CMD_REGSMP_PROG_DISABLE", 'H');
-define("ACP_CMD_REGSMP_PROG_SET_EM_MODE", 'I');
+define("ACP_CMD_PROG_STOP", "psp");
+define("ACP_CMD_PROG_START", "pst");
+define("ACP_CMD_PROG_RESET", "prs");
+define("ACP_CMD_PROG_ENABLE", "penl");
+define("ACP_CMD_PROG_DISABLE", "pdsl");
+define("ACP_CMD_PROG_ADD", "padd");
+define("ACP_CMD_PROG_DELETE", "pdel");
+define("ACP_CMD_PROG_GET_DATA_RUNTIME", "pgdr");
+define("ACP_CMD_PROG_GET_DATA_INIT", "pgdi");
+define("ACP_CMD_PROG_GET_DATA", "pgd");
 
-define("ACP_CMD_ALR_PROG_GET_DATA_RUNTIME", 'q');
-define("ACP_CMD_ALR_PROG_GET_DATA_INIT", 'r');
-define("ACP_CMD_ALR_PROG_SET_GOAL", 'u');
-define("ACP_CMD_ALR_PROG_SET_DELTA", 'w');
-define("ACP_CMD_ALR_PROG_SET_SMS", 's');
-define("ACP_CMD_ALR_PROG_SET_RING", 't');
-define("ACP_CMD_ALR_PROG_ENABLE", 'x');
-define("ACP_CMD_ALR_PROG_DISABLE", 'y');
-define("ACP_CMD_ALR_ALARM_DISABLE", 'z');
-define("ACP_CMD_ALR_ALARM_GET", 'A');
+define("ACP_CMD_REG_PROG_TUNE", "rptune");
+define("ACP_CMD_REG_PROG_SWITCH", "rpswitch");
+define("ACP_CMD_REG_PROG_GET_STATE", "rpgst");
+define("ACP_CMD_REG_PROG_GET_STATE_STSP", "rpgstsp");
 
-define("ACP_CMD_LGR_PROG_GET_DATA_INIT", 'q');
-define("ACP_CMD_LGR_PROG_GET_DATA_RUNTIME", 'r');
-define("ACP_CMD_LGR_PROG_ENABLE", 'x');
-define("ACP_CMD_LGR_PROG_DISABLE", 'y');
+define("ACP_CMD_REG_PROG_SET_GOAL", "rpsgoal");
+define("ACP_CMD_REG_PROG_SET_HEATER_POWER", "rpshp");
+define("ACP_CMD_REG_PROG_SET_COOLER_POWER", "rpscp");
+define("ACP_CMD_REG_PROG_SET_EM_MODE", "rpsemm");
+define("ACP_CMD_REG_PROG_SET_CHANGE_GAP", "rpschgap");
+define("ACP_CMD_REG_PROG_SET_COOLER_MODE", "rsmpscm");
+define("ACP_CMD_REG_PROG_SET_HEATER_MODE", "rsmpshm");
 
-define("ACP_QUANTIFIER_BROADCAST", '!');
-define("ACP_QUANTIFIER_SPECIFIC", '.');
+define("ACP_CMD_ALR_PROG_SET_SMS", "pssms");
+define("ACP_CMD_ALR_PROG_SET_RING", "psring");
+define("ACP_CMD_ALR_PROG_SET_GOAL", "psgoal");
+define("ACP_CMD_ALR_PROG_SET_DELTA", "psdelta");
+define("ACP_CMD_ALR_ALARM_DISABLE", "almdsl");
+define("ACP_CMD_ALR_ALARM_GET", "almg");
 
-define("ACP_RESP_REQUEST_FAILED", "F");
-define("ACP_RESP_REQUEST_SUCCEEDED", "T");
-define("ACP_RESP_REQUEST_SUCCEEDED_PARTIAL", "P");
-define("ACP_RESP_RESULT_UNKNOWN", "R");
-define("ACP_RESP_COMMAND_UNKNOWN", "U");
-define("ACP_RESP_QUANTIFIER_UNKNOWN", "Q");
-define("ACP_RESP_CRC_ERROR", "C");
-define("ACP_RESP_BUF_OVERFLOW", "O");
+define("ACP_CMD_LCK_LOCK", "lckl");
+define("ACP_CMD_LCK_UNLOCK", "lckul");
 
+define("ACP_CMD_MOBILE_RING", "mring");
+define("ACP_CMD_MOBILE_SEND_SMS", "mssms");
+
+define("ACP_CMD_REGONF_PROG_SET_HEATER_DELTA", "ronfshd");
+define("ACP_CMD_REGONF_PROG_SET_COOLER_DELTA", "ronfscd");
+
+
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KP", "rsmpshkp");
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KI", "rsmpshki");
+define("ACP_CMD_REGSMP_PROG_SET_HEATER_KD", "rsmpshkd");
+
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KP", "rsmpsckp");
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KI", "rsmpscki");
+define("ACP_CMD_REGSMP_PROG_SET_COOLER_KD", "rsmpsckd");
 
 $crc8_table = [
     0x00, 0x3e, 0x7c, 0x42, 0xf8, 0xc6, 0x84, 0xba, 0x95, 0xab, 0xe9, 0xd7,
@@ -159,111 +142,177 @@ function crc_update_by_str($crc, $str) {
 
 function crc_check($buf_str) {
     $str = "";
-    for ($i = 0; $i < \strlen($buf_str) - 1; $i++) {
-        $str .= $buf_str[$i];
+    $n = 0;
+    $f = 0;
+    $crc_buf = NULL;
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            $n++;
+        }
+        if (!$f) {
+            $str .= $buf_str[$i];
+        }
+        if ($n === 3 && !$f) {
+            $f = 1;
+            continue;
+        }
+        if ($f) {
+            $crc_buf = ord($buf_str[$i]);
+            break;
+        }
+    }
+    if (is_null($crc_buf)) {
+        return 0;
     }
     $crc_fact = 0x00;
     $crc_fact = crc_update_by_str($crc_fact, $str);
-    if ($crc_fact !== ord($buf_str[strlen($buf_str) - 1])) {
+    if ($crc_fact !== $crc_buf) {
         return 0;
     }
     return 1;
 }
 
-function getPackFromCmd($qnf, $cmd) {
-    $packet = $qnf . $cmd . ACP_DELIMITER_CMD . ACP_DELIMITER_CRC;
-    $crc = 0x00;
-    $crc = crc_update_by_str($crc, $packet);
-    return $packet;
+function id_check($buf_str, $id) {
+    $block_count = 0;
+    $str = "";
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            $block_count++;
+            continue;
+        }
+        if ($block_count === 2) {
+            $str.=$buf_str[$i];
+        }
+        if ($block_count > 2) {
+            break;
+        }
+    }
+    $found_id = 0;
+    $n = sscanf($str, "%d", $found_id);
+    if ($n !== 1) {
+        return 0;
+    }
+    if ($found_id !== $id) {
+        return 0;
+    }
+    return 1;
 }
 
-function sendPackI1($cmd, $i1_list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
-    foreach ($i1_list as $value) {
-        $buf.=$value . ACP_DELIMITER_ROW;
+function responseCheck($buf_str, $request_id) {
+    if (!crc_check($buf_str)) {
+        throw new \Exception("responseCheck: bad crc");
     }
-    $buf.=ACP_DELIMITER_CRC;
-    $crc = 0x00;
-    $crc = crc_update_by_str($crc, $buf);
-    $buf.=chr($crc);
-    $buf_len = \strlen($buf);
+    if (!id_check($buf_str, $request_id)) {
+        throw new \Exception("responseCheck: bad id");
+    }
+    return 1;
+}
+
+function getNewId() {
+    return rand(0, getrandmax());
+}
+
+function send($buf) {
+    $buf_len = \strlen($buf); //echo $buf;
     $n = \sock\sendBuf($buf);
     if ($n !== $buf_len) {
-        throw new \Exception("sendPackI1: sendBuf: expected to write: $buf_len, but written: $n");
+        throw new \Exception("acp\send: expected to write: $buf_len, but written: $n");
     }
 }
 
-function sendPackI1F1($cmd, $list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
-    foreach ($list as $value) {
-        $v0 = intval($value['p0']);
-        $v1 = floatval($value['p1']);
-        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
+function requestSend($cmd, $data, $pack_data_fun) {
+    $buf = "";
+    $buf = $cmd . ACP_DELIMITER_BLOCK;
+    if (!is_null($data) && !is_null($pack_data_fun)) {
+        $buf .= $pack_data_fun($data);
     }
-    $buf.=ACP_DELIMITER_CRC;
+    $buf.=ACP_DELIMITER_BLOCK;
+    $id = getNewId();
+    $buf.=$id . ACP_DELIMITER_BLOCK;
     $crc = 0x00;
     $crc = crc_update_by_str($crc, $buf);
     $buf.=chr($crc);
-    $buf_len = \strlen($buf);
-    $n = \sock\sendBuf($buf);
-    if ($n !== $buf_len) {
-        throw new \Exception("sendPackI1F1: sendBuf: expected to write: $buf_len, but written: $n");
-    }
+    send($buf);
+    return $id;
 }
 
-function sendPackI1S1($cmd, $list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
-    foreach ($list as $value) {
-        $v0 = intval($value['p0']);
-        $v1 = $value['p1'];
-        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
-    }
-    $buf.=ACP_DELIMITER_CRC;
-    $crc = 0x00;
-    $crc = crc_update_by_str($crc, $buf);
-    $buf.=chr($crc);
-    $buf_len = \strlen($buf);
-    $n = \sock\sendBuf($buf);
-    if ($n !== $buf_len) {
-        throw new \Exception("sendPackI1S1: sendBuf: expected to write: $buf_len, but written: $n");
-    }
+function requestSendCmd($cmd) {
+    return requestSend($cmd, NULL, NULL);
 }
 
-function sendPackI2($cmd, $list) {
-    $buf = ACP_QUANTIFIER_SPECIFIC . $cmd . ACP_DELIMITER_CMD;
-    foreach ($list as $value) {
-        $v0 = intval($value['p0']);
-        $v1 = intval($value['p1']);
-        $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
-    }
-    $buf.=ACP_DELIMITER_CRC;
-    $crc = 0x00;
-    $crc = crc_update_by_str($crc, $buf);
-    $buf.=chr($crc);
-    $buf_len = \strlen($buf);
-    $n = \sock\sendBuf($buf);
-    if ($n !== $buf_len) {
-        throw new \Exception("sendPackI2: sendBuf: expected to write: $buf_len, but written: $n");
-    }
+function requestSendI1List($cmd, $list) {
+    $packI1List = function ($list) {
+        $buf = "";
+        foreach ($list as $value) {
+            $buf.=$value . ACP_DELIMITER_ROW;
+        }
+        return $buf;
+    };
+    return requestSend($cmd, $list, $packI1List);
 }
 
-function sendPackBroadcast($cmd) {
-    $buf = ACP_QUANTIFIER_BROADCAST . $cmd . ACP_DELIMITER_CMD . ACP_DELIMITER_CRC;
-    $crc = 0x00;
-    $crc = crc_update_by_str($crc, $buf);
-    $buf.=chr($crc);
-    \sock\sendBuf($buf);
+function requestSendI2List($cmd, $list) {
+    $packI2List = function ($list) {
+        $buf = "";
+        foreach ($list as $value) {
+            $v0 = intval($value['p0']);
+            $v1 = intval($value['p1']);
+            $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
+        }
+        return $buf;
+    };
+    return requestSend($cmd, $list, $packI2List);
 }
 
-function getBufParseStateData() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
+function requestSendI1F1List($cmd, $list) {
+    $packI1F1List = function ($list) {
+        $buf = "";
+        foreach ($list as $value) {
+            $v0 = intval($value['p0']);
+            $v1 = floatval($value['p1']);
+            $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
+        }
+        return $buf;
+    };
+    return requestSend($cmd, $list, $packI1F1List);
+}
+
+function requestSendI1S1List($cmd, $list) {
+    $packI1S1List = function ($list) {
+        $buf = "";
+        foreach ($list as $value) {
+            $v0 = intval($value['p0']);
+            $v1 = $value['p1'];
+            $buf.=$v0 . ACP_DELIMITER_COLUMN . $v1 . ACP_DELIMITER_ROW;
+        }
+        return $buf;
+    };
+    return requestSend($cmd, $list, $packI1S1List);
+}
+
+function getBufParseStateData($request_id) {
+    $buf = \sock\getBuf(ACP_BUFFER_MAX_SIZE);
     if (\strlen($buf) === 0) {
         throw new \Exception("getBufParseStateData: controller returned nothing");
     }
-    if (!crc_check($buf)) {
-        throw new \Exception("getBufParseStateData: crc check failed");
+    if (!responseCheck($buf, $request_id)) {
+        throw new \Exception("getBufParseStateData: response check failed");
     }
-    return $buf[1];
+    $block_count = 0;
+    $str = "";
+    for ($i = 0; $i < \strlen($buf); $i++) {
+        if ($buf[$i] === ACP_DELIMITER_BLOCK) {
+            $block_count++;
+            continue;
+        }
+        if ($block_count === 1) {
+            $str.=$buf[$i];
+        }
+        if ($block_count > 2) {
+            break;
+        }
+    }
+    return $str;
 }
 
 function rowToArr($str, $items_count) {
@@ -277,14 +326,18 @@ function rowToArr($str, $items_count) {
 function getData($buf_str, $rowArr) {
     $data = [];
     $str = "";
-    //  $last_char = NULL;
+//  $last_char = NULL;
     $field_count = \count($rowArr);
+    $block_count = 0;
     for ($i = 0; $i < \strlen($buf_str); $i++) {
-        if ($i < 3) {
-            //   $last_char = $buf_str[$i];
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            $block_count++;
             continue;
         }
-        if ($buf_str[$i] === ACP_DELIMITER_CRC) {// && $last_char === ACP_DELIMITER_ROW) {
+        if ($block_count < 1) {
+            continue;
+        }
+        if ($block_count > 1) {
             return $data;
         }
         if ($buf_str[$i] === ACP_DELIMITER_ROW) {
@@ -299,28 +352,122 @@ function getData($buf_str, $rowArr) {
             $str = null;
         }
         $str.=$buf_str[$i];
-        // $last_char = $buf_str[$i];
+// $last_char = $buf_str[$i];
     }
     return $data;
 }
 
-function parseResponse($rowArr) {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
+function responseRead($request_id) {
+    $buf = \sock\getBuf(ACP_BUFFER_MAX_SIZE);
     if (\strlen($buf) === 0) {
-        throw new \Exception("parseResponse: controller returned nothing");
+        throw new \Exception("responseRead: controller returned nothing");
     }
-    if (!crc_check($buf)) {
-        throw new \Exception("parseResponse: crc check failed");
+    if (!responseCheck($buf, $request_id)) {
+        throw new \Exception("responseRead: response check failed");
     }
+    return $buf;
+}
+
+function responseReadNParse($rowArr, $requestId) {
+    $buf = responseRead($requestId);
     $data = getData($buf, $rowArr);
     if ($data === false) {
-        throw new \Exception("parseResponse: bad format");
+        throw new \Exception("responseRead: bad format");
     }
     return $data;
 }
 
-function getIrgValveState() {
-    return parseResponse([
+function responseGetSeq($buf_str) {
+    $seq_str = "";
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_COLUMN) {
+            break;
+        }
+        $seq_str.=$buf_str[$i];
+    }
+    return intval($seq_str, 10);
+}
+
+function responseGetInl($buf_str) {
+    $inl_str = "";
+    $f1 = 0;
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_COLUMN) {
+            $f1 = 1;
+            continue;
+        }
+        if (!$f1) {
+            continue;
+        }
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            break;
+        }
+        $inl_str.=$buf_str[$i];
+    }
+    return intval($inl_str, 10);
+}
+
+function responseGetData($buf_str) {
+    $data = "";
+    $n = 0;
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            $n++;
+            continue;
+        }
+        if ($n < 1) {
+            continue;
+        }
+        if ($n > 1) {
+            break;
+        }
+        $data.=$buf_str[$i];
+    }
+    return $data;
+}
+
+function bufferGetNextItem($arr, $seq) {
+    foreach ($arr as $value) {
+        if ($value["seq"] === $seq + 1) {
+            return $value["data"];
+        }
+    }
+    return NULL;
+}
+
+function responseReadText($requestId) {
+    $data_buffer = [];
+    $inl = 1;
+    $seq = -1;
+    $seq_last = -1;
+    $data = "";
+    $out = "";
+    while ($inl !== 0) {
+        $buf = responseRead($requestId);
+        $seq = responseGetSeq($buf);
+        $inl = responseGetInl($buf);
+        $data = responseGetData($buf);
+        if ($seq === $seq_last + 1) {
+            $out.=$data;
+            $seq_last = $seq;
+            while (1) {
+                $str = bufferGetNextItem($data_buffer, $seq_last);
+                if (is_null($str)) {
+                    break;
+                }
+                $out.=$str;
+                $seq++;
+                $seq_last = $seq;
+            }
+        } else {
+            array_push($data_buffer, ["seq" => $seq, "data" => $data]);
+        }
+    }
+    return $out;
+}
+
+function getIrgValveState($request_id) {
+    return responseReadNParse([
         'id' => null,
         'state' => null,
         'state_wp' => null,
@@ -333,11 +480,11 @@ function getIrgValveState() {
         'time_passed_main' => null,
         'time_passed_tc' => null,
         'last_output' => null
-    ]);
+            ], $request_id);
 }
 
-function getIrgValveState1() {
-    return parseResponse([
+function getIrgValveState1($request_id) {
+    return responseReadNParse([
         'id' => null,
         'output' => null,
         'rain' => null,
@@ -355,27 +502,27 @@ function getIrgValveState1() {
         'time_specified' => null,
         'time_rest_tc' => null,
         'em_peer_active' => null
-    ]);
+            ], $request_id);
 }
 
-function getLgrDataInit() {
-    return parseResponse([
+function getLgrDataInit($request_id) {
+    return responseReadNParse([
         'id' => null,
         'interval_min' => null,
         'max_rows' => null
-    ]);
+            ], $request_id);
 }
 
-function getLgrDataRuntime() {
-    return parseResponse([
+function getLgrDataRuntime($request_id) {
+    return responseReadNParse([
         'id' => null,
         'state' => null,
         'log_time_rest' => null
-    ]);
+            ], $request_id);
 }
 
-function getRegonfDataRuntime() {
-    return parseResponse([
+function getRegonfDataRuntime($request_id) {
+    return responseReadNParse([
         'id' => null,
         'state' => null,
         'state_r' => null,
@@ -384,23 +531,25 @@ function getRegonfDataRuntime() {
         'change_tm_rest' => null,
         'sensor_value' => null,
         'sensor_state' => null
-    ]);
+            ], $request_id);
 }
 
-function getRegonfDataInit() {
-    return parseResponse([
+function getRegonfDataInit($request_id) {
+    return responseReadNParse([
         'id' => null,
         'change_gap' => null,
         'goal' => null,
+        'heater_use' => null,
         'heater_delta' => null,
         'heater_rsl' => null,
+        'cooler_use' => null,
         'cooler_delta' => null,
         'cooler_rsl' => null
-    ]);
+            ], $request_id);
 }
 
-function getRegsmpDataRuntime() {
-    return parseResponse([
+function getRegsmpDataRuntime($request_id) {
+    return responseReadNParse([
         'id' => null,
         'state' => null,
         'state_r' => null,
@@ -409,33 +558,33 @@ function getRegsmpDataRuntime() {
         'change_tm_rest' => null,
         'sensor_value' => null,
         'sensor_state' => null
-    ]);
+            ], $request_id);
 }
 
-function getRegsmpDataInit() {
-    return parseResponse([
+function getRegsmpDataInit($request_id) {
+    return responseReadNParse([
         'id' => null,
         'goal' => null,
         'change_gap' => null,
         'heater_mode' => null,
-        'heater_use'=>null,
+        'heater_use' => null,
         'heater_rsl' => null,
         'heater_delta' => null,
         'heater_kp' => null,
         'heater_ki' => null,
-        'heater_kd' => null,        
+        'heater_kd' => null,
         'cooler_mode' => null,
-        'cooler_use'=>null,
+        'cooler_use' => null,
         'cooler_rsl' => null,
         'cooler_delta' => null,
         'cooler_kp' => null,
         'cooler_ki' => null,
         'cooler_kd' => null
-    ]);
+            ], $request_id);
 }
 
-function getAlrDataInit() {
-    return parseResponse([
+function getAlrDataInit($request_id) {
+    return responseReadNParse([
         'id' => null,
         'description' => null,
         'good_value' => null,
@@ -445,15 +594,15 @@ function getAlrDataInit() {
         'phone_number_group_id' => null,
         'sms' => null,
         'ring' => null
-    ]);
+            ], $request_id);
 }
 
-function getAlrDataRuntime() {
-    return parseResponse([
+function getAlrDataRuntime($request_id) {
+    return responseReadNParse([
         'id' => null,
         'state' => null,
         'cope_time_rest' => null
-    ]);
+            ], $request_id);
 }
 
 function parseDate($buf_str) {
@@ -480,7 +629,7 @@ function parseDate($buf_str) {
 }
 
 function getDate() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
+    $buf = \sock\getBuf(ACP_BUFFER_MAX_SIZE);
     if (\strlen($buf) === 0) {
         throw new \Exception("getDate: controller returned nothing");
     }
@@ -494,14 +643,14 @@ function getDate() {
     return $data;
 }
 
-function getFTS() {
-    return parseResponse([
+function getFTS($request_id) {
+    return responseReadNParse([
         'id' => null,
         'value' => null,
         'tv_sec' => null,
         'tv_nsec' => null,
         'state' => null
-    ]);
+            ], $request_id);
 }
 
 function parseString($buf_str) {
@@ -519,7 +668,7 @@ function parseString($buf_str) {
 }
 
 function getString() {
-    $buf = \sock\getBuf(ACP_BUF_SIZE);
+    $buf = \sock\getBuf(ACP_BUFFER_MAX_SIZE);
     if (\strlen($buf) === 0) {
         throw new \Exception("getString: controller returned nothing");
     }
