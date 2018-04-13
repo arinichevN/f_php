@@ -29,7 +29,7 @@ define("ACP_CMD_GET_INT", "gi");
 define("ACP_CMD_SET_FLOAT", "sf");
 define("ACP_CMD_SET_INT", "si");
 
-define("ACP_CMD_SET_DUTY_CYCLE_PWM", "sdcpwm");
+define("ACP_CMD_SET_PWM_DUTY_CYCLE", "sdcpwm");
 define("ACP_CMD_SET_DUTY_CYCLE_PM", "sdcpm");
 define("ACP_CMD_SET_PWM_PERIOD", "spwmp");
 define("ACP_CMD_SET_PM_DUTY_TIME_MIN", "spmdtm");
@@ -50,6 +50,8 @@ define("ACP_CMD_PROG_DELETE", "pdel");
 define("ACP_CMD_PROG_GET_DATA_RUNTIME", "pgdr");
 define("ACP_CMD_PROG_GET_DATA_INIT", "pgdi");
 define("ACP_CMD_PROG_GET_DATA", "pgd");
+define("ACP_CMD_PROG_GET_ERROR", "pgerr");
+define("ACP_CMD_PROG_GET_ENABLED", "pgenl");
 
 define("ACP_CMD_REG_PROG_TUNE", "rptune");
 define("ACP_CMD_REG_PROG_SWITCH", "rpswitch");
@@ -61,8 +63,8 @@ define("ACP_CMD_REG_PROG_SET_HEATER_POWER", "rpshp");
 define("ACP_CMD_REG_PROG_SET_COOLER_POWER", "rpscp");
 define("ACP_CMD_REG_PROG_SET_EM_MODE", "rpsemm");
 define("ACP_CMD_REG_PROG_SET_CHANGE_GAP", "rpschgap");
-define("ACP_CMD_REG_PROG_SET_COOLER_MODE", "rsmpscm");
-define("ACP_CMD_REG_PROG_SET_HEATER_MODE", "rsmpshm");
+define("ACP_CMD_REG_PROG_SET_COOLER_MODE", "rpscm");
+define("ACP_CMD_REG_PROG_SET_HEATER_MODE", "rpshm");
 
 define("ACP_CMD_ALR_PROG_SET_SMS", "pssms");
 define("ACP_CMD_ALR_PROG_SET_RING", "psring");
@@ -115,7 +117,7 @@ $crc8_table = [
 
 function crc_update($crc, $b) {
     for ($i = 8; $i; $i--) {
-        $crc = (($crc ^ $b) & 1) ? ($crc >> 1) ^ 0b10001100 : ($crc >> 1);
+        $crc = (($crc ^ $b) & 1) ? ($crc >> 1) ^ 0x8c : ($crc >> 1);
         $b >>= 1;
     }
     return $crc;
@@ -323,6 +325,11 @@ function rowToArr($str, $items_count) {
     return $data;
 }
 
+function rowToStr($str) {
+    $out=\str_replace(ACP_DELIMITER_COLUMN, " ", $str);
+    return $out;
+}
+
 function getData($buf_str, $rowArr) {
     $data = [];
     $str = "";
@@ -357,6 +364,32 @@ function getData($buf_str, $rowArr) {
     return $data;
 }
 
+function getRowStr($buf_str) {
+    $data = "";
+    $str = "";
+    $block_count = 0;
+    for ($i = 0; $i < \strlen($buf_str); $i++) {
+        if ($buf_str[$i] === ACP_DELIMITER_BLOCK) {
+            $block_count++;
+            continue;
+        }
+        if ($block_count < 1) {
+            continue;
+        }
+        if ($block_count > 1) {
+            return $data;
+        }
+        if ($buf_str[$i] === ACP_DELIMITER_ROW) {
+            $row_str = rowToStr($str);
+            $data .=$row_str;
+            $str = null;
+        }
+        $str.=$buf_str[$i];
+// $last_char = $buf_str[$i];
+    }
+    return $data;
+}
+
 function responseRead($request_id) {
     $buf = \sock\getBuf(ACP_BUFFER_MAX_SIZE);
     if (\strlen($buf) === 0) {
@@ -371,6 +404,15 @@ function responseRead($request_id) {
 function responseReadNParse($rowArr, $requestId) {
     $buf = responseRead($requestId);
     $data = getData($buf, $rowArr);
+    if ($data === false) {
+        throw new \Exception("responseRead: bad format");
+    }
+    return $data;
+}
+
+function responseReadRows($requestId) {
+    $buf = responseRead($requestId);
+    $data = getRowStr($buf);
     if ($data === false) {
         throw new \Exception("responseRead: bad format");
     }
@@ -602,6 +644,41 @@ function getAlrDataRuntime($request_id) {
         'id' => null,
         'state' => null,
         'cope_time_rest' => null
+            ], $request_id);
+}
+
+function getStpDataInit($request_id) {
+    return responseReadNParse([
+        'id' => null,
+        'first_repeat_id' => null,
+        'slave_peer_id' => null,
+        'slave_remote_id' => null,
+        'slave_check' => null,
+        'slave_retry_count' => null,
+        'repeat_first_step_id' => null,
+        'repeat_count' => null,
+        'repeat_next_repeat_id' => null,
+        'step_goal' => null,
+        'step_duration_sec' => null,
+        'step_goal_change_mode' => null,
+        'step_stop_kind' => null,
+        'step_next_step_id' => null
+            ], $request_id);
+}
+
+function getStpDataRuntime($request_id) {
+    return responseReadNParse([
+        'id' => null,
+        'state' => null,
+        'repeat_state' => null,
+        'repeat_ccount' => null,
+        'step_state' => null,
+        'step_state_ch' => null,
+        'step_value_start' => null,
+        'step_goal_correction' => null,
+        'step_state_sp' => null,
+        'step_wait_above' => null,
+        'step_tm_rest_sec' => null
             ], $request_id);
 }
 
