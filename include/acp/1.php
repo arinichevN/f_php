@@ -29,9 +29,12 @@ define("ACP_CMD_GET_INT", "gi");
 define("ACP_CMD_SET_FLOAT", "sf");
 define("ACP_CMD_SET_INT", "si");
 
-define("ACP_CMD_SET_PWM_DUTY_CYCLE", "sdcpwm");
-define("ACP_CMD_SET_DUTY_CYCLE_PM", "sdcpm");
+define("ACP_CMD_SET_PWM_DUTY_CYCLE", "spwmds");
 define("ACP_CMD_SET_PWM_PERIOD", "spwmp");
+define("ACP_CMD_SET_PWM_RESOLUTION", "spwmr");
+define("ACP_CMD_SET_PWM_DUTY_CYCLE_MIN", "spwmdsi");
+define("ACP_CMD_SET_PWM_DUTY_CYCLE_MAX", "spwmdsa");
+define("ACP_CMD_SET_PM_DUTY_CYCLE", "spmdc");
 define("ACP_CMD_SET_PM_DUTY_TIME_MIN", "spmdtm");
 define("ACP_CMD_SET_PM_IDLE_TIME_MIN", "spmitm");
 
@@ -52,6 +55,21 @@ define("ACP_CMD_PROG_GET_DATA_INIT", "pgdi");
 define("ACP_CMD_PROG_GET_DATA", "pgd");
 define("ACP_CMD_PROG_GET_ERROR", "pgerr");
 define("ACP_CMD_PROG_GET_ENABLED", "pgenl");
+define("ACP_CMD_PROG_NEXT_STEP", "pnstp");
+define("ACP_CMD_PROG_PREV_STEP", "ppstp");
+
+define("ACP_CMD_CHANNEL_STOP", "csp");
+define("ACP_CMD_CHANNEL_START", "cst");
+define("ACP_CMD_CHANNEL_RESET", "crs");
+define("ACP_CMD_CHANNEL_ENABLE", "cenl");
+define("ACP_CMD_CHANNEL_DISABLE", "cdsl");
+define("ACP_CMD_CHANNEL_ADD", "cadd");
+define("ACP_CMD_CHANNEL_DELETE", "cdel");
+define("ACP_CMD_CHANNEL_GET_DATA_RUNTIME", "cgdr");
+define("ACP_CMD_CHANNEL_GET_DATA_INIT", "cgdi");
+define("ACP_CMD_CHANNEL_GET_DATA", "cgd");
+define("ACP_CMD_CHANNEL_GET_ERROR", "cgerr");
+define("ACP_CMD_CHANNEL_GET_ENABLED", "cgenl");
 
 define("ACP_CMD_REG_PROG_TUNE", "rptune");
 define("ACP_CMD_REG_PROG_SWITCH", "rpswitch");
@@ -610,14 +628,16 @@ function getRegsmpDataInit($request_id) {
         'change_gap' => null,
         'heater_mode' => null,
         'heater_use' => null,
-        'heater_rsl' => null,
+        'heater_output_min' => null,
+        'heater_output_max' => null,
         'heater_delta' => null,
         'heater_kp' => null,
         'heater_ki' => null,
         'heater_kd' => null,
         'cooler_mode' => null,
         'cooler_use' => null,
-        'cooler_rsl' => null,
+        'cooler_output_min' => null,
+        'cooler_output_max' => null,
         'cooler_delta' => null,
         'cooler_kp' => null,
         'cooler_ki' => null,

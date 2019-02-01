@@ -3,9 +3,10 @@
 $app_version = 2;
 $basePath = '';
 $name = '';
+$db_conninfo = "";
 
 function go($appDir) {
-    global $basePath, $name;
+    global $basePath, $name, $db_conninfo;
     $basePath = $appDir;
     if (is_string($appDir)) {
         require($basePath . DIRECTORY_SEPARATOR . 'config/main.php');
@@ -15,12 +16,12 @@ function go($appDir) {
         $name = $c['name'];
         unset($c['name']);
     }
-
-    if (isset($c['sock']['use'])) {
-        require 'include' . DIRECTORY_SEPARATOR . 'sock' . DIRECTORY_SEPARATOR . $c['sock']['use'] . '.php';
-        if (isset($c['sock']['port']) && isset($c['sock']['addr']) && isset($c['sock']['timeout'])) {
+    if (isset($c['db']['use'])) {
+        require 'include' . DIRECTORY_SEPARATOR . 'db' . DIRECTORY_SEPARATOR . $c['db']['use'] . '.php';
+        if (isset($c['db']['conninfo'])) {
+            $db_conninfo = $c['db']['conninfo'];
             try {
-                \sock\init($c['sock']['addr'], $c['sock']['port'], $c['sock']['timeout']);
+                \db\init($db_conninfo);
             } catch (\Exception $exc) {
                 $response = [
                     'c_status' => 2,
@@ -34,11 +35,7 @@ function go($appDir) {
                 return;
             }
         }
-        unset($c['sock']);
-    }
-    if (isset($c['acp']['use'])) {
-        require 'include' . DIRECTORY_SEPARATOR . 'acp' . DIRECTORY_SEPARATOR . $c['acp']['use'] . '.php';
-        unset($c['acp']);
+        unset($c['db']);
     }
     if (isset($c['check']['use'])) {
         foreach ($c['check']['use'] as $value) {
@@ -46,7 +43,7 @@ function go($appDir) {
         }
         unset($c['check']);
     }
-    spl_autoload_register('autoload');
+    //   spl_autoload_register('autoload');
     run();
 }
 
@@ -56,12 +53,13 @@ function autoload($class) {
     if (file_exists($p)) {
         require $p;
     } else {
+
         throw new \Exception('no class');
     }
 }
 
 function run() {
-    global $sock;
+    global $db_connection;
     try {
         $raw_request = file_get_contents("php://input");
         if ($raw_request !== false) {
@@ -87,8 +85,8 @@ function run() {
         }
         send($response);
     }
-    if ($sock) {
-        \sock\suspend();
+    if ($db_connection) {
+        \db\suspend();
     }
 }
 
@@ -125,38 +123,33 @@ function getClassPath(&$arr) {
     return substr($output, 1);
 }
 
-function importAction($class) {
-    global $basePath;
-    $p = $basePath . DIRECTORY_SEPARATOR . 'include' . DIRECTORY_SEPARATOR . 'action' . DIRECTORY_SEPARATOR . str_replace('\\', '/', $class) . '.php';
-    if (file_exists($p)) {
-        require_once $p;
-    } else {
-        throw new \Exception('no action');
-    }
-}
-
 function processRequest(&$r) {
+	global $basePath;
     $response = [
         'data' => [],
         'status' => [],
         'c_status' => 1
     ];
     if (!is_array($r)) {
-        throw new \Exception('check param: array expected');
+        throw new \Exception('check param: array_expected');
     }
     foreach ($r as $a) {
         if (!isset($a['action']) || !is_array($a['action'])) {
             throw new \Exception('check param: bad action');
         }
-        $c = getClassPath($a['action']);
-        importAction($c);
         try {
+	        $c = getClassPath($a['action']);
+	        $path = $basePath . DIRECTORY_SEPARATOR . 'include' . DIRECTORY_SEPARATOR . 'action' . DIRECTORY_SEPARATOR . str_replace('\\', '/', $c) . '.php';
+		    if (!file_exists($path)) {
+		        throw new \Exception("no action: $path");
+		    }
+		    include $path;
             if (isset($a['param'])) {
-                $ri = $c::execute($a['param']);
+                $out = $af($a['param']);
             } else {
-                $ri = $c::execute();
+                $out = $af();
             }
-            $response['data'][] = $ri;
+            $response['data'][] = $out;
             $response['status'][] = 1;
         } catch (\Exception $exc) {
             $response['data'][] = $exc->getMessage();

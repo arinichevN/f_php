@@ -125,17 +125,8 @@ function getClassPath(&$arr) {
     return substr($output, 1);
 }
 
-function importAction($class) {
-    global $basePath;
-    $p = $basePath . DIRECTORY_SEPARATOR . 'include' . DIRECTORY_SEPARATOR . 'action' . DIRECTORY_SEPARATOR . str_replace('\\', '/', $class) . '.php';
-    if (file_exists($p)) {
-        require_once $p;
-    } else {
-        throw new \Exception('no action');
-    }
-}
-
 function processRequest(&$r) {
+	global $basePath;
     $response = [
         'data' => [],
         'status' => [],
@@ -148,15 +139,19 @@ function processRequest(&$r) {
         if (!isset($a['action']) || !is_array($a['action'])) {
             throw new \Exception('check param: bad action');
         }
-        $c = getClassPath($a['action']);
-        importAction($c);
         try {
+	        $c = getClassPath($a['action']);
+		    $path = $basePath . DIRECTORY_SEPARATOR . 'include' . DIRECTORY_SEPARATOR . 'action' . DIRECTORY_SEPARATOR . str_replace('\\', '/', $c) . '.php';
+		    if (!file_exists($path)) {
+		        throw new \Exception("no action: $path");
+		    }
+		    include $path;
             if (isset($a['param'])) {
-                $ri = $c::execute($a['param']);
+                $out = $af($a['param']);
             } else {
-                $ri = $c::execute();
+                $out = $af();
             }
-            $response['data'][] = $ri;
+            $response['data'][] = $out;
             $response['status'][] = 1;
         } catch (\Exception $exc) {
             $response['data'][] = $exc->getMessage();

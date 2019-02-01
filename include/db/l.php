@@ -9,6 +9,11 @@ function init($conninfo) {
     $db_connection = new \SQLite3($conninfo, SQLITE3_OPEN_READWRITE);
 }
 
+function initR($conninfo) {
+    global $db_connection;
+    $db_connection = new \SQLite3($conninfo, SQLITE3_OPEN_READONLY);
+}
+
 /**
  * Call it after you have asked database the last time
  * @return void
